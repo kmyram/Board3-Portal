@@ -22,3 +22,7 @@ A wiki with some basic information can be found here: https://github.com/board3/
 We are starting to have unit and functional tests in order to prevent regressions. You can check our GitHub Actions builds below.
 
 master - [![Tests](https://github.com/board3/Board3-Portal/actions/workflows/tests.yml/badge.svg)](https://github.com/board3/Board3-Portal/actions/workflows/tests.yml)
+
+## VEXTR fork
+
+phpBB 3.3.x on PHP 8.3–8.5: `ext.php` / `composer.json` allow PHP `< 8.6.0`. Version `2.3.0-vextr.1`. Upstream: https://github.com/board3/Board3-Portal (last release 2.3.0, 2023-03-19).

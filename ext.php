@@ -23,7 +23,7 @@ class ext extends \phpbb\extension\base
 		$phpbb_min_ver		= '3.2.6';
 		$phpbb_below_ver	= '3.4.0-dev';
 		$php_min_ver		= '7.1.0';
-		$php_below_ver		= '8.3.0-dev';
+		$php_below_ver		= '8.6.0-dev';
 
 		if (phpbb_version_compare(PHPBB_VERSION, '3.2.0-dev', '<'))
 		{
