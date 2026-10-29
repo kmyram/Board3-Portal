@@ -26,3 +26,5 @@ master - [![Tests](https://github.com/board3/Board3-Portal/actions/workflows/tes
 ## VEXTR fork
 
 phpBB 3.3.x on PHP 8.3–8.5: `ext.php` / `composer.json` allow PHP `< 8.6.0`. Version `2.3.0-vextr.1`. Upstream: https://github.com/board3/Board3-Portal (last release 2.3.0, 2023-03-19).
+
+Handover (rdeforum, patches, deploy, upstream): [HANDOVER.md](HANDOVER.md).
