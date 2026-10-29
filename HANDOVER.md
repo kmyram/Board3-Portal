@@ -171,14 +171,32 @@ UCP/MCP-skip til upstream: branch fra `upstream/master` med diffen af `event/lis
 
 ## Tests
 
-Upstream har PHPUnit + GitHub Actions (`tests.yml` på `master`).
+Der er ingen PHP på Mac. Test- og udviklingsmiljøet er Docker, ved siden af fork-en (ikke i dette git-repo):
+
+`/Users/kmyram/CodeRepos/GitHub/board3-phpbb-dev`
+
+phpBB **3.3.19** med `composer install` fra phpBB’s lock ligger i `phpbb/`. Extensionen bind-mountes fra denne clone.
 
 ```bash
-# i et phpBB-testmiljø som Board3 dokumenterer; composer.phar ligger i repoet
-php composer.phar install
+cd /Users/kmyram/CodeRepos/GitHub/board3-phpbb-dev
+docker compose run --rm test
+# php -l / ad hoc på samme PHP som rdeforum:
+docker compose run --rm php83 -l event/listener.php
 ```
 
-2026-10-29: `tests/unit/event/listener_test.php` kørt lokalt mod et phpBB **3.3.19**-træ (PHP **7.4.33**, PHPUnit **7.5.20**, phpBB’s egen `composer.lock`). 12 tests, 15 assertions, OK. Fuld suite er ikke kørt. PHPUnit 7 starter ikke på PHP 8.3; de to PHP-filer er kun `php -l`-tjekket dér. Twig-cache-mappen (`phpBB/cache/twig`) må ikke findes under kørslen: phpBB 3.3.19 kalder `clearCacheFiles()`, som Twig 2.16 ikke har.
+`test` er `php:7.4-cli` + PHPUnit **7.5.20** (det phpBB 3.3.19 låser). Uden argumenter kører den `tests/unit/event/listener_test.php`. Flere argumenter sendes til PHPUnit. PHPUnit 7 starter ikke på PHP 8.3, så suiten bliver på `test`. `php83` er `php:8.3-cli` med extensionen i `/src`.
+
+Kørsel mod en kopi af rdeforum (PHP 8.3, MariaDB, localhost:8088):
+
+```bash
+cd /Users/kmyram/CodeRepos/GitHub/board3-phpbb-dev
+docker compose -f rdeforum-compose.yml up -d
+docker compose -f rdeforum-compose.yml stop
+```
+
+Kopien er kode uden `files/` og `store/`, plus et dump uden `phpbb3_confirm`, `phpbb3_qa_confirm` og sessions-rækker. `config.php` og forum-URL peger på Docker-databasen, ikke live. Containeren mount’er denne clone ind over `ext/board3/portal`, så det er `vextr-php86` der kører, ikke snapshotet fra serveren.
+
+2026-10-29: listener-testen, 12 tests, 15 assertions, OK. Fuld suite er ikke kørt. `bin/phpunit.sh` sletter `phpBB/cache/twig` før hver kørsel: phpBB 3.3.19 kalder `clearCacheFiles()`, som Twig 2.16 ikke har.
 
 ## Næste naturlige skridt
 
