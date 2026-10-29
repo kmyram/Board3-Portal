@@ -155,10 +155,23 @@ class listener implements EventSubscriberInterface
 	protected function check_portal_all()
 	{
 		// Check if we should show the portal
-		if (isset($this->config['board3_show_all_pages']) && $this->config['board3_show_all_pages'] && !$this->board_disabled())
+		if (isset($this->config['board3_show_all_pages']) && $this->config['board3_show_all_pages'] && !$this->board_disabled() && !$this->skip_portal_on_page())
 		{
 			$this->display_portal();
 		}
+	}
+
+	/**
+	 * UCP (login, register, privacy, terms, user panel) is a focused form.
+	 * Portal side columns there duplicate login and steal width.
+	 *
+	 * @return bool True if portal columns should stay off
+	 */
+	protected function skip_portal_on_page()
+	{
+		$page_name = isset($this->user->page['page_name']) ? $this->user->page['page_name'] : '';
+
+		return $page_name === 'ucp.' . $this->php_ext;
 	}
 
 	/**
