@@ -223,6 +223,57 @@ class listener_test extends \phpbb_template_template_test_case
 		$this->assertEmpty($result);
 	}
 
+	/**
+	 * board3_show_all_pages must not put side columns on focused forms.
+	 * index.php (and other normal scripts) still get the column.
+	 *
+	 * @dataProvider show_all_pages_column_data
+	 */
+	public function test_show_all_pages_columns($page_name, $expect_columns)
+	{
+		$this->user->page = array(
+			'page_name' => $page_name,
+		);
+		$this->config->set('board3_show_all_pages', 1);
+		// Right column, same as board3_show_all_side in the ACP.
+		$this->config->set('board3_show_all_side', 1);
+		$this->config->set('board_disable', 0);
+		$this->controller_helper->set_current_url('/' . $page_name);
+
+		if ($expect_columns)
+		{
+			$this->controller->expects($this->once())
+				->method('handle')
+				->with($this->identicalTo(array(
+					'left' => false,
+					'right' => true,
+				)));
+		}
+		else
+		{
+			$this->controller->expects($this->never())
+				->method('handle');
+		}
+
+		$this->phpbb_dispatcher->addListener('core.page_header', array($this->listener, 'add_portal_link'));
+		$vars = array();
+		$this->phpbb_dispatcher->trigger_event('core.page_header', compact($vars));
+	}
+
+	public function show_all_pages_column_data()
+	{
+		return array(
+			'ucp' => array('ucp.php', false),
+			// phpBB appends the route to page_name (see session::extract_current_page).
+			'ucp route' => array('ucp.php/register', false),
+			'mcp' => array('mcp.php', false),
+			'index' => array('index.php', true),
+			'memberlist' => array('memberlist.php', true),
+			// No page yet: do not hide columns.
+			'missing page name' => array('', true),
+		);
+	}
+
 	public function test_load_portal_language()
 	{
 		$this->phpbb_dispatcher->addListener('core.user_setup', array($this->listener, 'load_portal_language'));

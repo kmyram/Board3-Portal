@@ -162,16 +162,32 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * UCP (login, register, privacy, terms, user panel) is a focused form.
-	 * Portal side columns there duplicate login and steal width.
+	 * UCP and MCP are focused forms (login, register, privacy, terms,
+	 * user panel, moderator panel). Portal side columns there duplicate
+	 * controls and steal width.
+	 *
+	 * phpBB's page_name is the script basename. A route is appended for
+	 * controller pages, for example app.php/portal, so only the script is
+	 * compared. Forum index and other scripts still follow
+	 * board3_show_all_pages.
 	 *
 	 * @return bool True if portal columns should stay off
 	 */
 	protected function skip_portal_on_page()
 	{
-		$page_name = isset($this->user->page['page_name']) ? $this->user->page['page_name'] : '';
+		if (!isset($this->user->page) || !is_array($this->user->page))
+		{
+			return false;
+		}
 
-		return $page_name === 'ucp.' . $this->php_ext;
+		$page_name = isset($this->user->page['page_name']) ? $this->user->page['page_name'] : '';
+		$slash = strpos($page_name, '/');
+		$script = ($slash === false) ? $page_name : substr($page_name, 0, $slash);
+
+		return in_array($script, array(
+			'ucp.' . $this->php_ext,
+			'mcp.' . $this->php_ext,
+		), true);
 	}
 
 	/**
