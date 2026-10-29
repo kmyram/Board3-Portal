@@ -78,24 +78,15 @@ ACP på rdeforum:
 
 Det satte højre kolonne (inkl. login-boks) på `ucp.php` — tilmelding, login, privacy, terms, user control panel. Ulæseligt og dobbelt login.
 
-`event/listener.php`:
+`event/listener.php` — `check_portal_all()` kalder `display_portal()` kun når `board3_show_all_pages` er sat, boardet ikke er disabled, og `skip_portal_on_page()` er falsk.
 
-```php
-protected function check_portal_all()
-{
-    if (isset($this->config['board3_show_all_pages']) && $this->config['board3_show_all_pages']
-        && !$this->board_disabled() && !$this->skip_portal_on_page())
-    {
-        $this->display_portal();
-    }
-}
+`skip_portal_on_page()` læser `$user->page['page_name']` (phpBB: script-basename, route hænges på for `app.php/…`). Sammenligningen er kun script-navnet:
 
-protected function skip_portal_on_page()
-{
-    $page_name = isset($this->user->page['page_name']) ? $this->user->page['page_name'] : '';
-    return $page_name === 'ucp.' . $this->php_ext;
-}
-```
+- `ucp.php` (også `ucp.php/register`) — skip
+- `mcp.php` — skip (samme fokuserede formularer: moderator-panelet)
+- `index.php`, `memberlist.php`, tom `page_name` — kolonne vises stadig
+
+Mangler `page` eller er den ikke et array, skjules kolonnerne ikke.
 
 `display_portal()` viser kun én side ad gangen ud fra `board3_show_all_side`:
 
@@ -104,9 +95,7 @@ protected function skip_portal_on_page()
 
 Selve portalsiden (`/portal` / `/app.php/portal`) har **begge** kolonner (venstre styres af `board3_left_column` + moduler i ACP, ikke af `show_all_side`).
 
-**Skip gælder kun `ucp.php`.** Forum-index (`index.php`) har stadig højre kolonne. `mcp.php` / `memberlist.php` er ikke skippet. Udvid `skip_portal_on_page()` hvis det skal gælde flere scripts.
-
-Unit-test `tests/unit/event/listener_test.php::test_check_portal_all` sætter ikke `user->page['page_name']` og dækker ikke skippet. Tilføj en test hvis du rører logikken igen.
+Skip: `ucp.php` og `mcp.php`. Forum-index (`index.php`) og `memberlist.php` har stadig sidekolonnen. `tests/unit/event/listener_test.php::test_show_all_pages_columns` dækker det (`board3_show_all_pages=1`, højre kolonne via `board3_show_all_side=1`). Den ældre `test_check_portal_all` sætter stadig ikke `page_name`.
 
 ## Live rdeforum (kontekst, ikke denne repo)
 
@@ -178,7 +167,7 @@ git push origin php-8.6-ceiling
 # PR: https://github.com/kmyram/Board3-Portal/compare/board3:master...kmyram:php-8.6-ceiling
 ```
 
-Tilsvarende for UCP-skip fra `dfb06eee`.
+UCP/MCP-skip til upstream: branch fra `upstream/master` med diffen af `event/listener.php` + `tests/unit/event/listener_test.php` (ikke `HANDOVER.md`). `dfb06eee` mangler MCP og tests. Committen ovenpå cherry-picker ikke rent alene, fordi den forudsætter skippet fra `dfb06eee`.
 
 ## Tests
 
@@ -189,14 +178,13 @@ Upstream har PHPUnit + GitHub Actions (`tests.yml` på `master`).
 php composer.phar install
 ```
 
-Vi har ikke kørt test-suiten efter VEXTR-patchene.
+2026-10-29: `tests/unit/event/listener_test.php` kørt lokalt mod et phpBB **3.3.19**-træ (PHP **7.4.33**, PHPUnit **7.5.20**, phpBB’s egen `composer.lock`). 12 tests, 15 assertions, OK. Fuld suite er ikke kørt. PHPUnit 7 starter ikke på PHP 8.3; de to PHP-filer er kun `php -l`-tjekket dér. Twig-cache-mappen (`phpBB/cache/twig`) må ikke findes under kørslen: phpBB 3.3.19 kalder `clearCacheFiles()`, som Twig 2.16 ikke har.
 
 ## Næste naturlige skridt
 
-- Unit-test for `skip_portal_on_page()` (ucp.php vs index.php).
-- Overvej skip af `mcp.php` (samme “fokuseret form”-argument).
-- PR til upstream for PHP-loftet (højest sandsynlighed for accept).
-- Hold live `ext/board3/portal` = `vextr-php86` (deploy-kommandoen ovenfor).
+- PR til upstream for PHP-loftet (højest sandsynlighed for accept). Cherry-pick af `5e0270b4` uden `2.3.0-vextr.1`.
+- PR til upstream for UCP/MCP-skip: kun `event/listener.php` + `tests/unit/event/listener_test.php` (ikke `HANDOVER.md`).
+- Hold live `ext/board3/portal` = `vextr-php86` (deploy-kommandoen ovenfor). Live har endnu ikke MCP-skippet før næste deploy.
 - phpBB 3.4 / PHP 8.6: loft og `$phpbb_below_ver` skal ses efter igen.
 
 ## Konventioner
